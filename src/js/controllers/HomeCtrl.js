@@ -3,5 +3,7 @@ angular.module('helloWorldApp')
     '$scope',
     function($scope) {
         $scope.message = "Good Initiative"
+        $scope.invitation = "Hello There"
+
     }
 ]);
