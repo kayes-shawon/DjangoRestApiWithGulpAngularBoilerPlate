@@ -1,3 +1,7 @@
+*.pyc
+*.py.orig
+*.swp
+.idea
 dist/
 node_modules/
 *.log
