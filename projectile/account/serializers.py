@@ -1,11 +1,14 @@
 from rest_framework import serializers
-from .models import TransactionHead 
-class TransactionHeadSerializer(serializers.ModelSerializer):
+from .models import Transaction 
+class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = TransactionHead
+        model = Transaction
         fields = (
             'id',
-            'name',
+            'date',
+            'head',
+            'amount',
+            'method',
         )
         read_only_fields = (
             'id',

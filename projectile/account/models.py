@@ -5,5 +5,13 @@ from django.db import models
 
 # Create your models here.
 
-class TransactionHead(models.Model):
-    name = models.CharField(max_length=255, blank=False, unique=True)
+class Transaction(models.Model):
+    date = models.DateTimeField()
+    head = models.CharField(max_length=255, blank=False, unique=True)
+    amount = models.FloatField()
+    method = models.CharField(max_length=255, blank= True)
+    
+
+    
+    
+    
