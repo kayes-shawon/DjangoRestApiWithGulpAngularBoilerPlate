@@ -9,8 +9,3 @@ from django.shortcuts import render
 class TransactionList(generics.ListCreateAPIView):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
-
-    def perform_create(self, serializer):
-        """Save the post data when creating a new bucketlist."""
-        serializer.save()
-
