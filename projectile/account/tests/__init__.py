@@ -1,11 +1,11 @@
 import factory
 import random
-from .. models import Transaction
+from .. models import Account
 from django.utils import timezone
 
-class TransactionFactory(factory.django.DjangoModelFactory):
+class AccountFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = Transaction
+        model = Account
 
     date = factory.Faker('date_time', tzinfo=timezone.utc)
     head = factory.Faker('first_name')
