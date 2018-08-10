@@ -1,8 +1,8 @@
 from rest_framework import serializers
-from .models import Transaction 
-class TransactionSerializer(serializers.ModelSerializer):
+from .models import Account 
+class AccountSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Transaction
+        model = Account
         fields = (
             'id',
             'date',
