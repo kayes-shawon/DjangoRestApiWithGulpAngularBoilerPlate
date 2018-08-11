@@ -1,17 +1,13 @@
 import uuid
 from django.db import models
+from enumerify import fields
 from model_utils import Choices
 from django.utils.translation import gettext as _
-
+from .enums import Status
 class EntityBaseModel(models.Model):
-    STATUSES = Choices(
-        (0, 'active', _('active')),
-        (1, 'inactive', _('inactive'))   )
-
-
     alias = models.UUIDField(
         default=uuid.uuid4, editable=False, db_index=True, unique=True)
-    status = models.IntegerField(choices=STATUSES, default=STATUSES.active)
+    status = fields.SelectIntegerField(blueprint=Status, default=Status.ACTIVE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
