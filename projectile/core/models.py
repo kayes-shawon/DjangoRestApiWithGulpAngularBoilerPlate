@@ -2,12 +2,84 @@
 from __future__ import unicode_literals
 
 from django.db import models
-from common.models import EntityBaseModel
+from common.models import (
+    EntityBaseModel,
+    NameDescriptionBaseModel,
+    NameDescriptionWithOrganizationBaseModel,
+)
 from common.fields import TimestampImageField
-
+from common.enums import Status
+from core.enums import (
+    PersonGroupType,
+    PersonGender,
+    Themes,
+    TextSize,
+    OrganizationType,
+    PaginationType
+)
+from enumerify import fields
+from django.utils.translation import ugettext_lazy as _
+from .managers import PersonManager
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 
 # Create your models here.
+
+
+class Organization(NameDescriptionBaseModel):
+    slogan = models.CharField(max_length=64)
+    address = models.CharField(max_length=255)
+    logo = TimestampImageField(
+        upload_to='organization/logo', blank=True, null=True)
+    primary_mobile = models.CharField(max_length=20)
+    other_contact = models.CharField(max_length=64, blank=True, null=True)
+    contact_person = models.CharField(max_length=64)
+    contact_person_designation = models.CharField(max_length=64)
+    email = models.CharField(max_length=64, blank=True, null=True)
+    website = models.CharField(max_length=64, blank=True, null=True)
+    domain = models.CharField(max_length=128, blank=True, null=True)
+    mother = models.ForeignKey('self', blank=True, null=True)
+    name_font_size = fields.SelectIntegerField(
+        blueprint=TextSize, default=TextSize.H2)
+    slogan_font_size = fields.SelectIntegerField(
+        blueprint=TextSize, default=TextSize.H3)
+    print_slogan = models.BooleanField(default=False)
+    print_address = models.BooleanField(default=True)
+    print_logo = models.BooleanField(default=True)
+    print_header = models.BooleanField(default=True)
+    print_patient_code = models.BooleanField(default=True)
+    print_patient_group = models.BooleanField(default=True)
+
+    type = fields.SelectIntegerField(
+        blueprint=OrganizationType, default=OrganizationType.MOTHER)
+
+    def __unicode__(self):
+        return self.get_name()
+
+    def get_name(self):
+        return u"#{}: {}".format(self.id, self.name)
+
+    def get_organization_by_name(self, organization_name):
+        try:
+            return Organization.objects.get(
+                name=organization_name,
+                status=Status.ACTIVE
+            )
+        except Organization.DoesNotExist:
+            return None
+
+    class Meta:
+        ordering = ('name',)
+
+    def get_all_organizations(self):
+        return Organization.objects.all()
+
+    def get_active_organizations(self):
+        return Organization.objects.filter(status=Status.ACTIVE)
+
+    def get_filtered_organizations(self, filter):
+        return Organization.objects.filter(**filter)
+
+
 class Person(AbstractBaseUser, PermissionsMixin, EntityBaseModel):
 
     """
@@ -24,14 +96,14 @@ class Person(AbstractBaseUser, PermissionsMixin, EntityBaseModel):
     # Django's default fields
     email = models.EmailField(
         db_index=True,
-        unique=False,
+        unique=True,
         null=True,
         default=None
     )
     phone = models.CharField(
         db_index=True,
         max_length=24,
-        unique=False,
+        unique=True,
         null=True,
         default=None
     )
@@ -55,11 +127,6 @@ class Person(AbstractBaseUser, PermissionsMixin, EntityBaseModel):
          deleting accounts.''')
     )
     # Extended fields
-    is_head_of_family = models.BooleanField(
-        _('head of family'),
-        default=False,
-        help_text=_('''Whether this user should be treated as head of his family''')
-    )
     nid = models.CharField(
         max_length=32,
         default=None,
@@ -100,7 +167,7 @@ class Person(AbstractBaseUser, PermissionsMixin, EntityBaseModel):
     )
     person_group = fields.SelectIntegerField(
         blueprint=PersonGroupType,
-        default=PersonGroupType.DEFAULT,
+        default=PersonGroupType.GUEST,
         db_index=True
     )
     balance = models.FloatField(
@@ -153,22 +220,13 @@ class Person(AbstractBaseUser, PermissionsMixin, EntityBaseModel):
         blank=True,
         null=True
     )
-    relatives_relation = fields.SelectIntegerField(
-        blueprint=Relationship
-    )
-    family_relation = fields.SelectIntegerField(
-        blueprint=FamilyRelationship,
-        default=FamilyRelationship.OTHER,
-        blank=True,
-        null=True
-    )
     patient_refered_by = models.CharField(
         max_length=255,
         blank=True,
         null=True
     )
     designation = models.ForeignKey(
-        EmployeeDesignation,
+        'EmployeeDesignation',
         models.DO_NOTHING,
         blank=True,
         null=True,
@@ -219,10 +277,6 @@ class Person(AbstractBaseUser, PermissionsMixin, EntityBaseModel):
         blank=True
     )
 
-    fingerprint_1 = models.TextField(blank=True, null=True)
-    fingerprint_2 = models.TextField(blank=True, null=True)
-    fingerprint_3 = models.TextField(blank=True, null=True)
-
     objects = PersonManager()
     organization = models.ForeignKey(
         Organization,
@@ -239,9 +293,6 @@ class Person(AbstractBaseUser, PermissionsMixin, EntityBaseModel):
         default=PaginationType.DEFAULT
     )
     USERNAME_FIELD = 'id'
-    date_picker = fields.SelectIntegerField(
-        blueprint=DatePickerType,
-        default=DatePickerType.DEFAULTDATEPICKER)
 
     # REQUIRED_FIELDS = (,)
 
@@ -256,3 +307,34 @@ class Person(AbstractBaseUser, PermissionsMixin, EntityBaseModel):
             self.phone
         )
         return name.strip()
+
+    def get_full_name(self):
+        """ Returns the full name """
+        name = u"{} {} - {}".format(self.first_name,
+                                    self.last_name, self.phone)
+        return name.strip()
+
+    def get_short_name(self):
+        return u"{}".format(self.phone)
+
+
+class Department(NameDescriptionWithOrganizationBaseModel):
+
+    class Meta:
+        ordering = ('name',)
+
+    def __unicode__(self):
+        return self.get_name()
+
+
+class EmployeeDesignation(NameDescriptionWithOrganizationBaseModel):
+    department = models.ForeignKey(
+        Department, models.DO_NOTHING,
+        db_index=True
+    )
+
+    def __unicode__(self):
+        return self.get_name()
+
+    def get_name(self):
+        return u"#{}: {} - {}".format(self.id, self.department, self.name)

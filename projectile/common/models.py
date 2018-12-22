@@ -34,7 +34,7 @@ class EntityBaseModel(models.Model):
         ordering = ('-created_at',)
 
 
-class EntityBaseWithOrganizationModel(models.Model):
+class EntityBaseWithOrganizationModel(EntityBaseModel):
     organization = models.ForeignKey(
             'core.Organization',
             models.DO_NOTHING,
@@ -71,10 +71,18 @@ class NameDescriptionWithOrganizationBaseModel(NameDescriptionBaseModel):
         db_index=True,
         verbose_name=('organization name')
     )
-
+    objects = models.Manager()
     class Meta:
         abstract = True
         ordering = ('name',)
 
-    def __unicode__(self):
-        return self.get_name()
+    def get_name(self):
+        try:
+            return u"ID: {}, Name: {}".format(self.clone.id,
+                                                        self.clone.name)
+        except AttributeError:
+            return u"ID: {}, Name: {}".format(self.id, self.name)
+    def get_belong_to_organization(self, organization_id):
+        if self.organization__id == organization_id:
+            return True
+        return False

@@ -29,19 +29,27 @@ ALLOWED_HOSTS = ['127.0.0.1']
 
 
 # Application definition
-
-INSTALLED_APPS = [
+DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework',
-    'account',
-
-    'sorl.thumbnail'
 ]
+
+PROJECT_APPS = [
+    'account',
+    'core',
+]
+
+THIRD_PARTY_APPS = [
+    'rest_framework',
+    'sorl.thumbnail',
+    'reversion'
+]
+
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + PROJECT_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -117,6 +125,10 @@ USE_L10N = True
 
 USE_TZ = True
 
+# USER MODEL SETTINGS
+AUTH_USER_MODEL = 'core.Person'
+
+AUTHENTICATION_BACKENDS = ('core.backends.BoilerAuthenticator',)
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
@@ -132,7 +144,6 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 10
